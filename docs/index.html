@@ -4,217 +4,297 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ideas</title>
-<meta name="description" content="Capture and track product ideas so you never forget them.">
+<meta name="description" content="Capture and grow your product ideas so you never forget them.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ideas">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ff9a3c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
 :root{
-  --bg:#f2f2f7; --card:#fff; --text:#000;
-  --text2:rgba(60,60,67,.62); --text3:rgba(60,60,67,.32);
-  --sep:rgba(60,60,67,.2); --fill:rgba(118,118,128,.12); --seg-on:#fff;
-  --accent:#ff9500; --indigo:#5856d6; --blue:#007aff; --orange:#ff9500;
-  --green:#28a745; --gray:#8e8e93; --red:#ff3b30;
-  color-scheme:light dark;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#000; --card:#1c1c1e; --text:#fff;
-    --text2:rgba(235,235,245,.62); --text3:rgba(235,235,245,.32);
-    --sep:rgba(84,84,88,.65); --fill:rgba(118,118,128,.24); --seg-on:#636366;
-    --accent:#ff9f0a; --indigo:#7d7aff; --blue:#0a84ff; --orange:#ff9f0a;
-    --green:#30d158; --gray:#98989d; --red:#ff453a;
-  }
+  color-scheme:light;
+  --bg:#fff7ef; --card:#ffffff; --text:#2b1d16; --text2:#7a6a60; --text3:#b8a99f;
+  --sep:#f1e3d6; --fill:#f8ece0; --input:#fffcf8;
+  --accent:#ff7a2f; --pink:#ff4d8d;
+  --grad:linear-gradient(135deg,#ffb347 0%,#ff7a2f 48%,#ff4d8d 100%);
+  --violet:#7c5cff; --blue:#2e8bff; --orange:#ff8a00; --green:#17a864; --gray:#9a8f88; --red:#ff3b55;
+  --shadow:0 2px 12px rgba(120,60,20,.07);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html,body{margin:0}
 body{
   background:var(--bg); color:var(--text);
-  font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
-  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
-  -webkit-text-size-adjust:100%; overscroll-behavior-y:none;
+  font:17px/1.4 ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; -webkit-text-size-adjust:100%;
+  min-height:100vh; touch-action:manipulation;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
 }
+input,textarea,.d-text{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 body.locked{overflow:hidden}
+body.sheet-open{background:#1a1008}
+#page{background:var(--bg);transition:transform .38s cubic-bezier(.2,.8,.2,1),border-radius .38s,filter .38s;min-height:100vh}
+body.sheet-open #page{transform:scale(.92);border-radius:18px;overflow:hidden;filter:brightness(.92)}
+body.sheet-open .fab{transform:translate(-50%,140px)}
+
+/* ---------- swipe rows (iOS style) ---------- */
+.swipe{position:relative;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);background:var(--card)}
+.swipe .card{box-shadow:none;transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform;touch-action:pan-y}
+.swipe.dragging .card{transition:none}
+.sw-right{position:absolute;top:0;bottom:0;right:0;display:flex;visibility:hidden}
+.swipe.dragging .sw-right,.swipe.open .sw-right{visibility:visible}
+.sw-right button{width:78px;border:0;color:#fff;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.sw-right button svg{width:22px;height:22px}
+.sw-pin{background:var(--accent)}
+.sw-del{background:var(--red)}
+.sw-left{position:absolute;inset:0;display:flex;align-items:center;gap:8px;padding-left:22px;color:#fff;font-weight:800;font-size:15px;background:var(--c);opacity:0}
+.sw-left svg{width:22px;height:22px}
+.swipe.dir-right .sw-left{opacity:1}
+.swipe.dir-right .sw-right{visibility:hidden}
+.toast.action{pointer-events:auto;display:flex;align-items:center;gap:14px}
+.toast .undo{border:0;background:none;color:var(--accent);font-weight:800;padding:0}
 button{font:inherit;color:inherit;cursor:pointer}
 svg{display:block;flex:none}
+.wrap{max-width:720px;margin:0 auto}
 
-/* ---------- top bar ---------- */
-.topbar{
-  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:2px;
-  padding:calc(env(safe-area-inset-top) + 4px) 8px 4px;
-  background:color-mix(in srgb,var(--bg) 82%,transparent);
-  -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:.5px solid transparent; transition:border-color .2s;
+/* ---------- hero ---------- */
+.hero{
+  position:relative; overflow:hidden; color:#fff; background:var(--grad);
+  padding:calc(env(safe-area-inset-top) + 12px) 20px 70px; border-radius:0 0 34px 34px;
 }
-.topbar.scrolled{border-bottom-color:var(--sep)}
-.topbar .mini{flex:1;text-align:center;font-weight:600;opacity:0;transition:opacity .2s}
-.topbar.scrolled .mini{opacity:1}
-.icon-btn{width:44px;height:44px;border:0;background:none;color:var(--accent);display:grid;place-items:center;border-radius:22px}
-.icon-btn:active{opacity:.4}
-.icon-btn svg{width:24px;height:24px}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.14);pointer-events:none}
+.hero::before{width:220px;height:220px;right:-70px;top:-60px}
+.hero::after{width:140px;height:140px;left:-50px;bottom:-60px}
+.hero-in{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.hero-top{display:flex;align-items:center;gap:8px}
+.greet{flex:1;font-size:16px;font-weight:700;opacity:.95}
+.round-btn{width:40px;height:40px;border:0;border-radius:20px;display:grid;place-items:center;background:rgba(255,255,255,.22);color:#fff}
+.round-btn svg{width:21px;height:21px}
+.round-btn:active{transform:scale(.92)}
+.hero h1{margin:14px 0 18px;font-size:29px;line-height:1.18;font-weight:800;letter-spacing:-.01em;text-wrap:balance;max-width:560px;min-height:2.36em}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.22);border-radius:14px;padding:8px 12px;font-size:14px;font-weight:600;white-space:nowrap}
+.stat b{font-size:18px;font-weight:800}
 
-main{max-width:720px;margin:0 auto;padding-bottom:calc(env(safe-area-inset-bottom) + 100px)}
-h1.large{font-size:34px;line-height:1.15;font-weight:700;letter-spacing:.005em;margin:2px 16px 10px}
+/* ---------- capture card ---------- */
+.capture{
+  position:relative; z-index:2; margin:-48px 16px 0; padding:16px;
+  background:var(--card); border-radius:26px;
+  box-shadow:0 14px 34px rgba(255,110,60,.2),0 2px 6px rgba(0,0,0,.04);
+}
+.cap-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.prompt-row{display:flex;align-items:flex-start;gap:10px;margin:6px 0 12px}
+.prompt{flex:1;font-size:19px;line-height:1.25;font-weight:800;transition:opacity .2s}
+.prompt.fade{opacity:0}
+.dice{flex:none;width:40px;height:40px;border:0;border-radius:13px;background:var(--fill);font-size:20px;display:grid;place-items:center}
+.dice:active{transform:rotate(25deg) scale(.92)}
+.cap-input{
+  display:block; width:100%; min-height:92px; resize:none; outline:none;
+  border:2px solid var(--sep); border-radius:18px; background:var(--input);
+  padding:12px 14px; font:inherit; font-size:17px; color:var(--text);
+  transition:border-color .2s, box-shadow .2s;
+}
+.cap-input::placeholder{color:var(--text3)}
+.cap-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(255,122,47,.14)}
+.cap-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.ghost{border:0;background:none;color:var(--text2);font-size:15px;font-weight:700;padding:8px 2px;display:flex;align-items:center;gap:6px}
+.ghost svg{width:18px;height:18px}
+.grad-btn{
+  border:0; border-radius:999px; background:var(--grad); color:#fff; font-weight:800;
+  padding:12px 22px; display:flex; align-items:center; gap:8px;
+  box-shadow:0 8px 18px rgba(255,77,141,.3); transition:opacity .2s, transform .1s;
+}
+.grad-btn svg{width:18px;height:18px}
+.grad-btn:active{transform:scale(.96)}
+.grad-btn:disabled{opacity:.45;box-shadow:none}
+.nudge{margin:10px 2px 0;font-size:13px;color:var(--text2)}
 
-.search{margin:0 16px 8px;display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:10px;padding:0 8px;height:38px;color:var(--text2)}
+/* ---------- list ---------- */
+.list-head{display:flex;align-items:center;margin:28px 20px 10px}
+.list-head h2{flex:1;margin:0;font-size:22px;font-weight:800}
+.list-head .count{color:var(--text3);font-weight:700;margin-left:6px}
+.icon-btn{width:40px;height:40px;border:0;border-radius:20px;background:var(--card);color:var(--accent);display:grid;place-items:center;box-shadow:var(--shadow)}
+.icon-btn svg{width:20px;height:20px}
+.search{margin:0 16px 4px;display:flex;align-items:center;gap:8px;background:var(--card);border-radius:14px;padding:0 12px;height:44px;color:var(--text3);box-shadow:var(--shadow)}
 .search svg{width:18px;height:18px}
 .search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:17px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
-.search input::placeholder{color:var(--text2)}
+.search input::placeholder{color:var(--text3)}
 .search input::-webkit-search-cancel-button{-webkit-appearance:none}
-.search .clear{border:0;background:none;color:var(--text2);padding:4px;display:none}
+.search .clear{border:0;background:none;color:var(--text3);padding:4px;display:none}
 .search.has .clear{display:block}
 
-.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 16px 4px;scrollbar-width:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 6px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:7px 12px;font-size:15px;font-weight:500;background:var(--card);color:var(--text)}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 14px;font-size:15px;font-weight:700;background:var(--card);color:var(--text);box-shadow:var(--shadow)}
 .chip svg{width:15px;height:15px;color:var(--c)}
-.chip .n{color:var(--text2);font-variant-numeric:tabular-nums}
+.chip .n{color:var(--text3);font-variant-numeric:tabular-nums}
 .chip.on{background:var(--c);color:#fff}
 .chip.on svg{color:#fff}
 .chip.on .n{color:rgba(255,255,255,.85)}
 
-.section-h{margin:22px 32px 7px;font-size:13px;font-weight:400;text-transform:uppercase;letter-spacing:.02em;color:var(--text2)}
-.group{margin:0 16px;background:var(--card);border-radius:12px;overflow:hidden}
-.group.pad{padding:14px 16px}
-.foot{margin:7px 32px 0;font-size:13px;color:var(--text2)}
-
-/* ---------- rows ---------- */
-.row{display:block;width:100%;text-align:left;border:0;background:none;padding:12px 16px;position:relative}
-.row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
-.row:active{background:var(--fill)}
-.row-top{display:flex;align-items:flex-start;gap:6px}
-.row-title{flex:1;min-width:0;font-weight:600;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.row-desc{margin-top:3px;font-size:15px;color:var(--text2);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.row-meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text2);min-width:0}
-.row-meta .cat{display:inline-flex;align-items:center;gap:3px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.row-meta .cat svg{width:12px;height:12px}
-.row-meta .time{margin-left:auto;color:var(--text3);white-space:nowrap}
+.group-title{margin:18px 20px 8px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)}
+.cards{display:flex;flex-direction:column;gap:10px;margin:0 16px}
+.card{
+  position:relative; display:block; width:100%; text-align:left; border:0; overflow:hidden;
+  background:var(--card); border-radius:20px; padding:14px 16px 13px 20px; box-shadow:var(--shadow);
+  transition:transform .12s;
+}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.card:active{transform:scale(.985)}
+.card-top{display:flex;align-items:flex-start;gap:6px}
+.card-title{flex:1;min-width:0;font-weight:800;font-size:17px;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-desc{margin-top:3px;font-size:15px;color:var(--text2);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--text2);min-width:0}
+.card-meta .cat{display:inline-flex;align-items:center;gap:3px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.card-meta .cat svg{width:12px;height:12px}
+.card-meta .time{margin-left:auto;color:var(--text3);white-space:nowrap;font-weight:600}
+.next-hint{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:700;color:var(--accent)}
+.next-hint svg{width:15px;height:15px}
 .pin{color:var(--accent);padding-top:3px}
-.pin svg{width:14px;height:14px}
-.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.pin svg{width:15px;height:15px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
 .pill svg{width:12px;height:12px}
 .flames{display:inline-flex;color:var(--red);padding-top:4px}
-.flames svg{width:12px;height:12px}
+.flames svg{width:13px;height:13px}
 
-/* ---------- empty / banner ---------- */
-.empty{text-align:center;padding:56px 32px 0;color:var(--text2)}
-.empty .big-ico{width:64px;height:64px;margin:0 auto 14px;color:var(--text3)}
-.empty h2{margin:0 0 6px;color:var(--text);font-size:22px}
-.empty p{margin:0 auto 18px;max-width:300px;font-size:15px}
-.btn{border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;padding:12px 20px}
-.btn:active{opacity:.7}
-.banner{margin:8px 16px 0;background:var(--card);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;font-size:14px}
-.banner img{width:40px;height:40px;border-radius:9px}
+.empty{text-align:center;padding:30px 32px 10px;color:var(--text2)}
+.empty .emoji{font-size:54px;line-height:1;margin-bottom:10px}
+.empty h3{margin:0 0 6px;color:var(--text);font-size:21px;font-weight:800}
+.empty p{margin:0 auto;max-width:300px;font-size:15px}
+
+.banner{margin:14px 16px 0;background:var(--card);border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:center;font-size:14px;box-shadow:var(--shadow)}
+.banner img{width:42px;height:42px;border-radius:10px}
 .banner b{display:block;font-size:15px}
 .banner .x{border:0;background:none;color:var(--text3);padding:6px;margin-left:auto}
 .banner .x svg{width:18px;height:18px}
 .share-ico{display:inline-block;vertical-align:-3px;width:16px;height:16px;color:var(--blue)}
 
-/* ---------- quick button ---------- */
 .fab{
-  position:fixed; left:50%; transform:translateX(-50%); z-index:4;
-  bottom:calc(env(safe-area-inset-bottom) + 14px);
+  position:fixed; left:50%; z-index:4; bottom:calc(env(safe-area-inset-bottom) + 16px);
+  transform:translate(-50%,120px); transition:transform .3s cubic-bezier(.2,.8,.2,1);
   display:flex; align-items:center; gap:8px; border:0; border-radius:999px;
-  padding:14px 24px; background:var(--accent); color:#fff; font-weight:600;
-  box-shadow:0 6px 20px rgba(0,0,0,.2);
+  padding:14px 24px; background:var(--grad); color:#fff; font-weight:800;
+  box-shadow:0 10px 26px rgba(255,77,141,.38);
 }
+.fab.show{transform:translate(-50%,0)}
 .fab svg{width:20px;height:20px}
-.fab:active{transform:translateX(-50%) scale(.96)}
+main{padding-bottom:calc(env(safe-area-inset-bottom) + 110px)}
 
 /* ---------- sheets ---------- */
-.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);opacity:0;transition:opacity .28s;z-index:20}
+.backdrop{position:fixed;inset:0;background:rgba(60,30,10,.32);opacity:0;transition:opacity .28s;z-index:20}
 .backdrop.show{opacity:1}
 .sheet{
   position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:720px; margin:0 auto;
   height:calc(100% - env(safe-area-inset-top) - 18px);
-  background:var(--bg); border-radius:14px 14px 0 0;
+  background:var(--bg); border-radius:26px 26px 0 0;
   transform:translateY(105%); transition:transform .34s cubic-bezier(.2,.8,.2,1);
   display:flex; flex-direction:column; overflow:hidden;
 }
 .sheet.short{height:auto;max-height:calc(100% - env(safe-area-inset-top) - 18px)}
 .sheet.show{transform:none}
-.grabber{width:36px;height:5px;border-radius:3px;background:var(--text3);margin:6px auto 0;flex:none}
-.sheet-head{display:flex;align-items:center;padding:4px 6px 8px;flex:none}
-.sheet-head .t{flex:1;text-align:center;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.txt-btn{border:0;background:none;color:var(--accent);font-size:17px;padding:8px 10px;min-width:82px}
+.grabber{width:38px;height:5px;border-radius:3px;background:var(--text3);opacity:.6;margin:7px auto 0;flex:none}
+.sheet-head{display:flex;align-items:center;padding:4px 8px 8px;flex:none}
+.sheet-head .t{flex:1;text-align:center;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txt-btn{border:0;background:none;color:var(--accent);font-size:17px;font-weight:600;padding:8px 10px;min-width:82px}
 .txt-btn.l{text-align:left}
 .txt-btn.r{text-align:right}
-.txt-btn.strong{font-weight:600}
+.txt-btn.strong{font-weight:800}
 .txt-btn:disabled{color:var(--text3)}
 .sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(env(safe-area-inset-bottom) + 28px)}
-.sheet-body>.section-h:first-child{margin-top:8px}
 
-.field{position:relative;padding:11px 16px}
-.field+.field::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.section-h{margin:22px 24px 8px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text2)}
+.group{margin:0 16px;background:var(--card);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.group.pad{padding:16px}
+.foot{margin:8px 24px 0;font-size:13px;color:var(--text2)}
+.field{position:relative;padding:12px 16px}
+.field+.field::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--sep)}
 .field textarea,.field input[type=text]{display:block;width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--text);outline:none;resize:none;padding:0;-webkit-appearance:none;appearance:none}
 .field textarea::placeholder,.field input::placeholder{color:var(--text3)}
-.field textarea.big{font-size:20px;font-weight:600}
+.field textarea.big{font-size:21px;font-weight:800}
 .field.inline{display:flex;align-items:center;gap:12px}
-.field.inline label{flex:1}
+.field.inline label{flex:1;font-weight:600}
 
 .status-grid{display:flex;flex-wrap:wrap;gap:8px;margin:0 16px}
-.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:0 16px}
-.seg button{flex:1;border:0;background:none;padding:7px 4px;border-radius:7px;font-size:13px;font-weight:500}
-.seg button.on{background:var(--seg-on);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.seg{display:flex;background:var(--fill);border-radius:12px;padding:3px;margin:0 16px}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;border-radius:9px;font-size:14px;font-weight:700;color:var(--text2)}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 5px rgba(120,60,20,.15)}
 
 .switch{position:relative;width:51px;height:31px;flex:none}
 .switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
-.switch span{position:absolute;inset:0;border-radius:31px;background:var(--fill);transition:background .2s;pointer-events:none}
+.switch span{position:absolute;inset:0;border-radius:31px;background:#e9dccf;transition:background .2s;pointer-events:none}
 .switch span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s}
-.switch input:checked+span{background:var(--green)}
+.switch input:checked+span{background:var(--accent)}
 .switch input:checked+span::after{transform:translateX(20px)}
 
-/* ---------- detail ---------- */
-.d-title{margin:0 0 10px;font-size:24px;line-height:1.2;font-weight:700;word-break:break-word}
+.d-title{margin:0 0 10px;font-size:25px;line-height:1.2;font-weight:800;word-break:break-word}
 .d-meta{display:flex;align-items:center;gap:8px}
 .d-meta .flames,.d-meta .pin{padding-top:0}
 .d-text{margin:12px 0 0;white-space:pre-wrap;word-break:break-word;user-select:text;-webkit-user-select:text}
-.next{display:flex;gap:10px;align-items:flex-start;word-break:break-word}
+.next{display:flex;gap:10px;align-items:flex-start;word-break:break-word;font-weight:600}
 .next svg{width:22px;height:22px;color:var(--accent);margin-top:-1px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.tag{font-size:14px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:3px 9px;border-radius:999px}
-.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;position:relative}
-.kv+.kv::before,.kv+.tags-row::before,.list-btn+.list-btn::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
-.kv span:last-child{color:var(--text2);text-align:right}
-.tags-row{padding:11px 16px;position:relative}
-.list-btn{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:12px 16px;text-align:left;position:relative;color:var(--accent)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:14px;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);padding:4px 10px;border-radius:999px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;position:relative}
+.kv+.kv::before,.kv+.tags-row::before,.list-btn+.list-btn::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--sep)}
+.kv span:last-child{color:var(--text2);text-align:right;font-weight:600}
+.tags-row{padding:12px 16px;position:relative}
+.list-btn{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:13px 16px;text-align:left;position:relative;color:var(--accent);font-weight:700}
 .list-btn:active{background:var(--fill)}
 .list-btn svg{width:20px;height:20px}
 .list-btn.danger{color:var(--red)}
-.list-btn .end{margin-left:auto;color:var(--text2)}
-.list-btn.plain{color:var(--text)}
+.list-btn.plain{color:var(--text);font-weight:600}
+.list-btn .end{margin-left:auto}
 .check{color:var(--accent)}
 
-/* ---------- toast ---------- */
+/* ---------- toast + confetti ---------- */
 .toast{
-  position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 10px); z-index:50;
-  transform:translate(-50%,-20px); opacity:0; pointer-events:none;
-  background:color-mix(in srgb,var(--card) 92%,transparent);
-  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
-  color:var(--text); padding:10px 18px; border-radius:999px; font-size:15px; font-weight:500;
-  box-shadow:0 6px 24px rgba(0,0,0,.18); transition:opacity .25s, transform .25s; white-space:nowrap;
+  position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 12px); z-index:50;
+  transform:translate(-50%,-24px); opacity:0; pointer-events:none;
+  background:#fff; color:var(--text); padding:11px 20px; border-radius:999px;
+  font-size:15px; font-weight:800; box-shadow:0 10px 30px rgba(120,60,20,.22);
+  transition:opacity .25s, transform .25s; white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
-<header class="topbar" id="topbar">
-  <button class="icon-btn" id="settingsBtn" aria-label="Settings"></button>
-  <div class="mini">Ideas</div>
-  <button class="icon-btn" id="sortBtn" aria-label="Sort"></button>
-  <button class="icon-btn" id="addBtn" aria-label="New detailed idea"></button>
+<div id="page">
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-top">
+      <div class="greet" id="greet"></div>
+      <button class="round-btn" id="settingsBtn" aria-label="Settings"></button>
+    </div>
+    <h1 id="motto"></h1>
+    <div class="stats" id="stats"></div>
+  </div>
 </header>
 
-<main>
-  <h1 class="large" id="largeTitle">Ideas</h1>
+<main class="wrap">
+  <section class="capture" id="capture" aria-label="Capture a new idea">
+    <div class="cap-label">✨ Spark of the moment</div>
+    <div class="prompt-row">
+      <div class="prompt" id="prompt"></div>
+      <button class="dice" id="dice" aria-label="Show another question">🎲</button>
+    </div>
+    <textarea class="cap-input" id="capInput" rows="3" placeholder="Type your idea… even half an idea counts" enterkeyhint="done"></textarea>
+    <div class="cap-actions">
+      <button class="ghost" id="moreBtn" type="button"></button>
+      <button class="grad-btn" id="capBtn" type="button" disabled></button>
+    </div>
+    <div class="nudge" id="nudge"></div>
+  </section>
+
   <div id="banner"></div>
+
+  <div class="list-head" id="listHead">
+    <h2>Your ideas<span class="count" id="countLbl"></span></h2>
+    <button class="icon-btn" id="sortBtn" aria-label="Sort"></button>
+  </div>
   <div id="controls">
     <label class="search" id="searchBox">
       <span id="searchIco"></span>
@@ -226,9 +306,11 @@ h1.large{font-size:34px;line-height:1.15;font-weight:700;letter-spacing:.005em;m
   </div>
   <div id="list"></div>
 </main>
+</div>
 
-<button class="fab" id="quickBtn"></button>
+<button class="fab" id="fab"></button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<canvas id="confetti"></canvas>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 
 <script>
@@ -239,7 +321,7 @@ h1.large{font-size:34px;line-height:1.15;font-weight:700;letter-spacing:.005em;m
 const KEY = 'ideas.v1';
 const SORT_KEY = 'ideas.sort';
 const BANNER_KEY = 'ideas.bannerDismissed';
-const VERSION = '1.0.0';
+const VERSION = '2.0.0';
 
 const ICON = {
   bulb: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z"/>',
@@ -249,12 +331,14 @@ const ICON = {
   pause: '<circle cx="12" cy="12" r="10"/><path d="M10 15V9"/><path d="M14 15V9"/>',
   stack: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
   pin: '<path d="M12 17v5"/><path d="M9 10.76V4h6v6.76l3 3.24V16H6v-2z"/>',
-  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.830-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
   sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
-  bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  sparkles: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>',
   folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
   arrow: '<circle cx="12" cy="12" r="10"/><path d="m12 16 4-4-4-4"/><path d="M8 12h8"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   xcircle: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
@@ -262,13 +346,13 @@ const ICON = {
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
-  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
 };
+ICON.gear = ICON.gear.replace('2.830', '2.83');
 const FLAME = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 23c4.4 0 8-3.1 8-7.6 0-3.7-2.4-6.2-4.3-8.5-.5 2-1.5 3.2-2.7 3.7.3-3.6-1.3-6.9-4.5-9.1.4 3.5-1.6 5.6-3.3 7.7C3.9 11 3 12.9 3 15.4 3 19.9 7.6 23 12 23z"/></svg>';
 const svg = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
 
 const STATUS = {
-  idea:      { t: 'Idea',      c: 'var(--indigo)', i: 'bulb' },
+  idea:      { t: 'Idea',      c: 'var(--violet)', i: 'bulb' },
   exploring: { t: 'Exploring', c: 'var(--blue)',   i: 'search' },
   building:  { t: 'Building',  c: 'var(--orange)', i: 'hammer' },
   shipped:   { t: 'Shipped',   c: 'var(--green)',  i: 'send' },
@@ -278,10 +362,37 @@ const ORDER = ['idea', 'exploring', 'building', 'shipped', 'parked'];
 const PRIORITY = ['None', 'Low', 'Medium', 'High'];
 const SORTS = { updated: 'Recently Updated', created: 'Newest First', priority: 'Priority', title: 'Name' };
 
+const MOTTOS = [
+  'Every big product started as a tiny note.',
+  'Ideas are cheap. Written ideas are gold.',
+  'Your next big thing is one thought away.',
+  'Capture it now. Judge it later.',
+  'Small ideas grow when you write them down.',
+  'The best time to save an idea is right now.',
+  'A dream with a next step is a plan.',
+  'Curious minds build the future.',
+  'Write it down before it flies away.',
+];
+const PROMPTS = [
+  'What annoyed you today?',
+  'What would you happily pay for that doesn’t exist yet?',
+  'What do you keep doing by hand that an app could do?',
+  'What do your friends always complain about?',
+  'What tool would make your work 2× faster?',
+  'What’s too complicated that could be 10× simpler?',
+  'Which hobby deserves a better app?',
+  'What did you search for and not find?',
+  'What problem do you understand better than most people?',
+  'What would you build if it couldn’t fail?',
+  'What did you wish existed this week?',
+  'What could you build for your family or city?',
+];
+const CHEERS = ['Captured! 🎉', 'Nice one! 💡', 'Another spark saved ✨', 'Future you says thanks 🙌', 'That could be big 🚀', 'Love it! 🧡'];
+
 /* ================= helpers ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const iso = (d = new Date()) => d.toISOString().replace(/\.\d{3}Z$/, 'Z'); // no ms: matches the native app's backup format
+const iso = (d = new Date()) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 const validDate = (v) => { const d = new Date(v); return isNaN(d) ? iso() : iso(d); };
 const makeId = () => (crypto.randomUUID ? crypto.randomUUID()
   : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -289,10 +400,13 @@ const makeId = () => (crypto.randomUUID ? crypto.randomUUID()
     })).toUpperCase();
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } };
+const pick = (arr, not) => { let v; do { v = arr[Math.floor(Math.random() * arr.length)]; } while (arr.length > 1 && v === not); return v; };
 const displayTitle = (i) => i.title.trim() || 'Untitled idea';
 const searchText = (i) => [i.title, i.details, i.problem, i.nextStep, i.category, i.tags.join(' ')].join(' ').toLowerCase();
 const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const dayKey = (d) => { d = new Date(d); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function parseTags(text) {
   const seen = new Set(); const out = [];
@@ -302,7 +416,6 @@ function parseTags(text) {
   }
   return out;
 }
-
 function rel(when) {
   const d = new Date(when); const s = (Date.now() - d) / 1000;
   if (s < 60) return 'just now';
@@ -315,15 +428,64 @@ function rel(when) {
   return d.toLocaleDateString(undefined, opts);
 }
 const fullDate = (when) => new Date(when).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Late-night thinking 🌙';
+  if (h < 12) return 'Good morning ☀️';
+  if (h < 17) return 'Good afternoon 🌤️';
+  if (h < 21) return 'Good evening 🌅';
+  return 'Good night 🌙';
+}
 
 const pill = (s) => `<span class="pill" style="--c:${STATUS[s].c}">${svg(STATUS[s].i)}${STATUS[s].t}</span>`;
 const flames = (p) => p > 0 ? `<span class="flames" aria-label="${PRIORITY[p]} priority">${FLAME.repeat(p)}</span>` : '';
 const pinMark = () => `<span class="pin" aria-label="Pinned">${svg('pin')}</span>`;
 
 let toastTimer;
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+function toast(msg, action) {
+  const t = $('#toast');
+  t.classList.toggle('action', !!action);
+  t.innerHTML = `<span>${esc(msg)}</span>` + (action ? `<button class="undo">${esc(action.label)}</button>` : '');
+  if (action) t.querySelector('.undo').onclick = () => { t.classList.remove('show'); action.fn(); };
+  t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? 4000 : 2200);
+}
+function deleteIdea(id) {
+  const idx = ideas.findIndex((x) => x.uuid === id); if (idx < 0) return;
+  const [removed] = ideas.splice(idx, 1);
+  save(); render();
+  toast('Idea deleted', { label: 'Undo', fn: () => { ideas.splice(Math.min(idx, ideas.length), 0, removed); save(); render(); } });
+}
+
+/* ================= confetti ================= */
+function confetti(x, y) {
+  if (reduceMotion) return;
+  const c = $('#confetti'); const ctx = c.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+  const colors = ['#ff7a2f', '#ff4d8d', '#ffb347', '#7c5cff', '#2e8bff', '#17a864', '#ffd23f'];
+  const parts = Array.from({ length: 110 }, () => ({
+    x, y, vx: (Math.random() - 0.5) * 11, vy: -Math.random() * 12 - 4,
+    w: 6 + Math.random() * 6, h: 4 + Math.random() * 4, r: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.4, color: colors[(Math.random() * colors.length) | 0],
+  }));
+  const start = performance.now();
+  (function frame(t) {
+    const el = t - start;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const p of parts) {
+      p.vy += 0.38; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - el / 1700);
+      ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    if (el < 1700) requestAnimationFrame(frame); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+  })(start);
+}
+function celebrate(fromEl) {
+  const r = fromEl ? fromEl.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 3, width: 0, height: 0 };
+  confetti(r.left + r.width / 2, r.top + r.height / 2);
+  toast(`${pick(CHEERS)}  Idea #${ideas.length}`);
 }
 
 /* ================= data ================= */
@@ -345,14 +507,21 @@ function load() {
   try { const raw = JSON.parse(lsGet(KEY) || '[]'); return Array.isArray(raw) ? raw.map(normalize) : []; }
   catch { return []; }
 }
-function save() {
-  if (!lsSet(KEY, JSON.stringify(ideas))) toast('⚠️ Could not save, storage is full or blocked');
-}
+function save() { if (!lsSet(KEY, JSON.stringify(ideas))) toast('⚠️ Could not save, storage is full or blocked'); }
 const find = (id) => ideas.find((i) => i.uuid === id);
 const touch = (i) => { i.updatedAt = iso(); };
 
 let ideas = load();
-const ui = { filter: null, search: '', sort: SORTS[lsGet(SORT_KEY)] ? lsGet(SORT_KEY) : 'updated' };
+const ui = { filter: null, search: '', sort: SORTS[lsGet(SORT_KEY)] ? lsGet(SORT_KEY) : 'updated', prompt: pick(PROMPTS) };
+
+function streak() {
+  const days = new Set(ideas.map((i) => dayKey(i.createdAt)));
+  const d = new Date(); let n = 0;
+  const today = days.has(dayKey(d));
+  if (!today) d.setDate(d.getDate() - 1);
+  while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return { n, today };
+}
 
 function visibleIdeas() {
   const q = ui.search.trim().toLowerCase();
@@ -366,41 +535,88 @@ function visibleIdeas() {
   return list.sort(by[ui.sort] || by.updated);
 }
 
-/* ================= main list ================= */
-function rowHTML(i) {
-  return `<button class="row" data-id="${esc(i.uuid)}">
-    <div class="row-top">${i.isPinned ? pinMark() : ''}<span class="row-title">${esc(displayTitle(i))}</span>${flames(i.priority)}</div>
-    ${i.details.trim() ? `<div class="row-desc">${esc(i.details)}</div>` : ''}
-    <div class="row-meta">${pill(i.status)}${i.category ? `<span class="cat">${svg('folder')}${esc(i.category)}</span>` : ''}<span class="time">${rel(i.updatedAt)}</span></div>
-  </button>`;
+/* ================= hero + capture ================= */
+function renderHero() {
+  $('#greet').textContent = greeting();
+  const s = streak();
+  const building = ideas.filter((i) => i.status === 'building').length;
+  const shipped = ideas.filter((i) => i.status === 'shipped').length;
+  $('#stats').innerHTML =
+    `<div class="stat">💡 <b>${ideas.length}</b> ${ideas.length === 1 ? 'idea' : 'ideas'}</div>` +
+    `<div class="stat">🔥 <b>${s.n}</b> day streak</div>` +
+    (shipped ? `<div class="stat">🚀 <b>${shipped}</b> shipped</div>` : `<div class="stat">🔨 <b>${building}</b> building</div>`);
+  $('#nudge').textContent = !ideas.length
+    ? 'Your first idea is the hardest. Type anything!'
+    : s.today ? `You've captured an idea today. Keep the streak going tomorrow 🔥`
+    : s.n ? `Add one idea today to keep your ${s.n}-day streak alive 🔥`
+    : 'One idea a day keeps the creativity flowing 💪';
+}
+function setPrompt(next) {
+  const el = $('#prompt');
+  ui.prompt = next;
+  el.classList.add('fade');
+  setTimeout(() => { el.textContent = ui.prompt; el.classList.remove('fade'); }, 180);
+}
+function captureNow() {
+  const input = $('#capInput');
+  const text = input.value.trim(); if (!text) return;
+  const [first, ...rest] = text.split('\n');
+  ideas.push(normalize({ title: first.trim(), details: rest.join('\n').trim() }));
+  save();
+  input.value = ''; input.style.height = ''; syncCapture(); input.blur();
+  celebrate($('#capBtn'));
+  setPrompt(pick(PROMPTS, ui.prompt));
+  render();
+}
+function syncCapture() { $('#capBtn').disabled = !$('#capInput').value.trim(); }
+
+/* ================= list ================= */
+const NEXT = { idea: 'exploring', exploring: 'building', building: 'shipped', shipped: null, parked: 'idea' };
+function cardHTML(i) {
+  const nx = NEXT[i.status];
+  return `<div class="swipe" data-id="${esc(i.uuid)}">
+  ${nx ? `<div class="sw-left" style="--c:${STATUS[nx].c}">${svg(STATUS[nx].i)}Move to ${STATUS[nx].t}</div>` : ''}
+  <div class="sw-right">
+    <button class="sw-pin" data-sw="pin">${svg('pin')}${i.isPinned ? 'Unpin' : 'Pin'}</button>
+    <button class="sw-del" data-sw="delete">${svg('trash')}Delete</button>
+  </div>
+  <button class="card" style="--c:${STATUS[i.status].c}" data-id="${esc(i.uuid)}">
+    <div class="card-top">${i.isPinned ? pinMark() : ''}<span class="card-title">${esc(displayTitle(i))}</span>${flames(i.priority)}</div>
+    ${i.details.trim() ? `<div class="card-desc">${esc(i.details)}</div>` : ''}
+    ${i.nextStep.trim() && i.status !== 'shipped' ? `<div class="next-hint">${svg('arrowR')}<span>${esc(i.nextStep)}</span></div>` : ''}
+    <div class="card-meta">${pill(i.status)}${i.category ? `<span class="cat">${svg('folder')}${esc(i.category)}</span>` : ''}<span class="time">${rel(i.updatedAt)}</span></div>
+  </button></div>`;
 }
 
 function render() {
+  renderHero();
   const counts = {}; ideas.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
-  $('#controls').style.display = ideas.length ? '' : 'none';
+  const has = ideas.length > 0;
+  $('#controls').style.display = has ? '' : 'none';
+  $('#sortBtn').style.display = has ? '' : 'none';
+  $('#countLbl').textContent = has ? ` ${ideas.length}` : '';
   $('#chips').innerHTML =
     `<button class="chip${ui.filter ? '' : ' on'}" style="--c:var(--accent)" data-filter="">${svg('stack')}All <span class="n">${ideas.length}</span></button>` +
     ORDER.map((s) => `<button class="chip${ui.filter === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-filter="${s}">${svg(STATUS[s].i)}${STATUS[s].t} <span class="n">${counts[s] || 0}</span></button>`).join('');
 
   const list = $('#list');
-  if (!ideas.length) {
-    list.innerHTML = `<div class="empty"><div class="big-ico">${svg('bulb')}</div><h2>No ideas yet</h2>
-      <p>Capture product ideas the moment they hit you, so you never lose one again.</p>
-      <button class="btn" data-act="quick">Capture your first idea</button></div>`;
+  if (!has) {
+    list.innerHTML = `<div class="empty"><div class="emoji">🌱</div><h3>Your idea garden is empty</h3>
+      <p>Every app you love started as one line in someone's notes. Plant your first idea above ⬆️</p></div>`;
     return;
   }
   const items = visibleIdeas();
   if (!items.length) {
     list.innerHTML = ui.search.trim()
-      ? `<div class="empty"><div class="big-ico">${svg('search')}</div><h2>No results</h2><p>Nothing matches “${esc(ui.search.trim())}”.</p></div>`
-      : `<div class="empty"><div class="big-ico">${svg(STATUS[ui.filter].i)}</div><h2>Nothing here</h2><p>No ideas with status “${STATUS[ui.filter].t}” yet.</p></div>`;
+      ? `<div class="empty"><div class="emoji">🔍</div><h3>No matches</h3><p>Nothing matches “${esc(ui.search.trim())}”. Maybe it's a new idea? Write it above!</p></div>`
+      : `<div class="empty"><div class="emoji">${ui.filter === 'shipped' ? '🚀' : '📭'}</div><h3>Nothing here yet</h3><p>${ui.filter === 'shipped' ? 'Your first shipped idea will show up here. You’ve got this!' : `No ideas marked “${STATUS[ui.filter].t}” yet.`}</p></div>`;
     return;
   }
   const pinned = items.filter((i) => i.isPinned);
   const rest = items.filter((i) => !i.isPinned);
   let html = '';
-  if (pinned.length) html += `<h3 class="section-h">Pinned</h3><div class="group">${pinned.map(rowHTML).join('')}</div>`;
-  if (rest.length) html += `<h3 class="section-h">${pinned.length ? 'Ideas' : SORTS[ui.sort]}</h3><div class="group">${rest.map(rowHTML).join('')}</div>`;
+  if (pinned.length) html += `<div class="group-title">📌 Pinned</div><div class="cards">${pinned.map(cardHTML).join('')}</div>`;
+  if (rest.length) html += `${pinned.length ? '<div class="group-title">All ideas</div>' : ''}<div class="cards">${rest.map(cardHTML).join('')}</div>`;
   list.innerHTML = html;
 }
 
@@ -414,30 +630,76 @@ function renderBanner() {
 
 /* ================= sheets ================= */
 const stack = [];
-function openSheet(inner, short = false) {
+function openSheet(inner, short = false, onClose = null) {
   const bd = document.createElement('div'); bd.className = 'backdrop';
   const sh = document.createElement('div'); sh.className = 'sheet' + (short ? ' short' : '');
   sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true');
   sh.innerHTML = '<div class="grabber"></div>' + inner;
+  if (!stack.length) {
+    // iOS "card stack": shrink the page around the middle of what's on screen
+    $('#page').style.transformOrigin = `50% ${scrollY + innerHeight / 2}px`;
+  }
   document.body.append(bd, sh);
-  stack.push({ bd, sh });
+  const layer = { bd, sh, onClose };
+  stack.push(layer);
   bd.addEventListener('click', closeSheet);
-  void sh.offsetHeight; // force layout so the slide-up transition runs
+  enableSwipeDown(layer);
+  void sh.offsetHeight;
   bd.classList.add('show'); sh.classList.add('show');
-  document.body.classList.add('locked');
+  document.body.classList.add('locked', 'sheet-open');
   return sh;
 }
 function closeSheet() {
   const l = stack.pop(); if (!l) return;
   if (document.activeElement && l.sh.contains(document.activeElement)) document.activeElement.blur();
+  l.bd.style.opacity = '';
   l.bd.classList.remove('show'); l.sh.classList.remove('show');
   setTimeout(() => { l.bd.remove(); l.sh.remove(); }, 340);
-  if (!stack.length) document.body.classList.remove('locked');
+  if (!stack.length) document.body.classList.remove('locked', 'sheet-open');
+  if (l.onClose) l.onClose();
+}
+
+// Drag a sheet down to dismiss it, like native iOS sheets.
+function enableSwipeDown(layer) {
+  const { sh, bd } = layer;
+  let startY = 0, startT = 0, dy = 0, state = 'idle', body = null;
+  sh.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || stack[stack.length - 1] !== layer) return;
+    body = sh.querySelector('.sheet-body');
+    const onHandle = !!e.target.closest('.grabber, .sheet-head');
+    if (!onHandle && body && body.scrollTop > 0) return; // let the content scroll first
+    startY = e.touches[0].clientY; startT = Date.now(); dy = 0; state = 'pending';
+  }, { passive: true });
+  sh.addEventListener('touchmove', (e) => {
+    if (state === 'idle') return;
+    dy = e.touches[0].clientY - startY;
+    if (state === 'pending') {
+      if (Math.abs(dy) < 8) return;
+      if (dy < 0) { state = 'idle'; return; } // pulling up = normal scroll
+      state = 'drag';
+      sh.style.transition = 'none'; bd.style.transition = 'none';
+      if (document.activeElement && sh.contains(document.activeElement)) document.activeElement.blur();
+    }
+    e.preventDefault();
+    const y = Math.max(0, dy);
+    sh.style.transform = `translateY(${y}px)`;
+    bd.style.opacity = String(Math.max(0, 1 - y / sh.offsetHeight));
+  }, { passive: false });
+  const end = () => {
+    if (state !== 'drag') { state = 'idle'; return; }
+    state = 'idle';
+    sh.style.transition = ''; bd.style.transition = '';
+    const velocity = dy / Math.max(1, Date.now() - startT);
+    sh.style.transform = '';
+    if (dy > sh.offsetHeight * 0.25 || velocity > 0.55) closeSheet();
+    else bd.style.opacity = '';
+  };
+  sh.addEventListener('touchend', end);
+  sh.addEventListener('touchcancel', end);
 }
 const head = (title, left = 'Cancel', right = '') =>
   `<div class="sheet-head"><button class="txt-btn l" data-act="cancel">${left}</button><div class="t">${esc(title)}</div>` +
   (right ? `<button class="txt-btn r strong" data-act="ok">${right}</button>` : '<span class="txt-btn r"></span>') + '</div>';
-
 function autoGrow(root) {
   root.querySelectorAll('textarea').forEach((t) => {
     const fit = () => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
@@ -445,52 +707,30 @@ function autoGrow(root) {
   });
 }
 
-/* ---------- quick capture ---------- */
-function openQuick() {
-  const sh = openSheet(head('Quick Idea', 'Cancel', 'Save') + `<div class="sheet-body">
-    <div class="group" style="margin-top:8px">
-      <div class="field"><textarea id="q-title" class="big" rows="1" placeholder="What's the idea?" enterkeyhint="next"></textarea></div>
-      <div class="field"><textarea id="q-notes" rows="3" placeholder="Quick notes (optional)"></textarea></div>
-    </div>
-    <p class="foot">Just get it down. You can add the problem, next step and tags later.</p></div>`, true);
-  const t = $('#q-title', sh), n = $('#q-notes', sh), ok = $('[data-act=ok]', sh);
-  const sync = () => { ok.disabled = !t.value.trim(); };
-  sync(); autoGrow(sh);
-  t.addEventListener('input', sync);
-  t.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); n.focus(); } });
-  $('[data-act=cancel]', sh).onclick = closeSheet;
-  ok.onclick = () => {
-    if (!t.value.trim()) return;
-    ideas.push(normalize({ title: t.value.trim(), details: n.value.trim() }));
-    save(); render(); closeSheet(); toast('💡 Idea saved');
-  };
-  t.focus();
-}
-
 /* ---------- editor (new / edit) ---------- */
-function openEditor(id) {
+function openEditor(id, preset = {}) {
   const ex = id ? find(id) : null;
-  const d = ex ? { ...ex, tags: [...ex.tags] } : normalize({});
+  const d = ex ? { ...ex, tags: [...ex.tags] } : normalize(preset);
   const cats = [...new Set(ideas.map((i) => i.category.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const sh = openSheet(head(ex ? 'Edit Idea' : 'New Idea', 'Cancel', 'Save') + `<div class="sheet-body">
-    <h3 class="section-h">Idea</h3>
+    <h3 class="section-h">💡 The idea</h3>
     <div class="group">
-      <div class="field"><textarea id="e-title" class="big" rows="1" placeholder="Title">${esc(d.title)}</textarea></div>
-      <div class="field"><textarea id="e-details" rows="3" placeholder="Describe it">${esc(d.details)}</textarea></div>
+      <div class="field"><textarea id="e-title" class="big" rows="1" placeholder="Give it a name">${esc(d.title)}</textarea></div>
+      <div class="field"><textarea id="e-details" rows="3" placeholder="Describe it: what does it do?">${esc(d.details)}</textarea></div>
     </div>
-    <h3 class="section-h">Problem it solves</h3>
+    <h3 class="section-h">🎯 Problem it solves</h3>
     <div class="group"><div class="field"><textarea id="e-problem" rows="2" placeholder="Who has this problem? Why does it matter?">${esc(d.problem)}</textarea></div></div>
-    <h3 class="section-h">Next step</h3>
+    <h3 class="section-h">👣 Next step</h3>
     <div class="group"><div class="field"><textarea id="e-next" rows="1" placeholder="e.g. Sketch the main screen">${esc(d.nextStep)}</textarea></div></div>
     <p class="foot">One small, concrete action makes it much easier to actually start.</p>
-    <h3 class="section-h">Status</h3>
+    <h3 class="section-h">📈 Status</h3>
     <div class="status-grid" id="e-status">${ORDER.map((s) => `<button class="chip${d.status === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-status="${s}">${svg(STATUS[s].i)}${STATUS[s].t}</button>`).join('')}</div>
-    <h3 class="section-h">Priority</h3>
+    <h3 class="section-h">🔥 Priority</h3>
     <div class="seg" id="e-priority">${PRIORITY.map((p, n) => `<button class="${d.priority === n ? 'on' : ''}" data-p="${n}">${p}</button>`).join('')}</div>
     <div class="group" style="margin-top:16px">
-      <div class="field inline"><label for="e-pin">Pin to top</label><span class="switch"><input type="checkbox" id="e-pin" ${d.isPinned ? 'checked' : ''}><span></span></span></div>
+      <div class="field inline"><label for="e-pin">📌 Pin to top</label><span class="switch"><input type="checkbox" id="e-pin" ${d.isPinned ? 'checked' : ''}><span></span></span></div>
     </div>
-    <h3 class="section-h">Organize</h3>
+    <h3 class="section-h">🗂 Organize</h3>
     <div class="group">
       <div class="field"><input type="text" id="e-cat" list="e-cats" placeholder="Category (e.g. SaaS, Mobile, AI)" value="${esc(d.category)}" autocomplete="off"></div>
       <div class="field"><input type="text" id="e-tags" placeholder="Tags, separated by commas" value="${esc(d.tags.join(', '))}" autocapitalize="none" autocomplete="off"></div>
@@ -501,7 +741,6 @@ function openEditor(id) {
   const ok = $('[data-act=ok]', sh), title = $('#e-title', sh);
   const sync = () => { ok.disabled = !title.value.trim(); };
   sync(); title.addEventListener('input', sync);
-
   sh.addEventListener('click', (e) => {
     const st = e.target.closest('[data-status]');
     if (st) { d.status = st.dataset.status; sh.querySelectorAll('[data-status]').forEach((b) => b.classList.toggle('on', b === st)); return; }
@@ -512,6 +751,7 @@ function openEditor(id) {
   ok.onclick = () => {
     if (!title.value.trim()) return;
     const target = ex || d;
+    const wasShipped = ex && ex.status === 'shipped';
     Object.assign(target, {
       title: title.value.trim(),
       details: $('#e-details', sh).value.trim(),
@@ -525,7 +765,9 @@ function openEditor(id) {
     touch(target);
     if (!ex) ideas.push(target);
     save(); render(); closeSheet(); refreshDetail();
-    toast(ex ? 'Saved' : '💡 Idea saved');
+    if (!ex) { $('#capInput').value = ''; syncCapture(); celebrate(null); setPrompt(pick(PROMPTS, ui.prompt)); }
+    else if (target.status === 'shipped' && !wasShipped) { confetti(innerWidth / 2, innerHeight / 3); toast('You shipped it! 🚀🎉'); }
+    else toast('Saved ✓');
   };
   if (!ex) title.focus();
 }
@@ -533,24 +775,27 @@ function openEditor(id) {
 /* ---------- detail ---------- */
 let detail = null;
 function openDetail(id) {
-  const sh = openSheet(`<div class="sheet-head"><button class="txt-btn l" data-act="cancel">Done</button><div class="t"></div><button class="txt-btn r" data-act="edit">Edit</button></div><div class="sheet-body" id="d-body"></div>`);
+  const sh = openSheet(`<div class="sheet-head"><button class="txt-btn l" data-act="cancel">Done</button><div class="t"></div><button class="txt-btn r strong" data-act="edit">Edit</button></div><div class="sheet-body" id="d-body"></div>`, false, () => { detail = null; });
   detail = { id, sh };
   paintDetail();
   sh.addEventListener('click', (e) => {
     const i = find(detail && detail.id); if (!i) return;
     const st = e.target.closest('[data-status]');
-    if (st) { i.status = st.dataset.status; touch(i); save(); render(); paintDetail(); return; }
+    if (st) {
+      const was = i.status; i.status = st.dataset.status; touch(i); save(); render(); paintDetail();
+      if (i.status === 'shipped' && was !== 'shipped') { confetti(innerWidth / 2, innerHeight / 3); toast('You shipped it! 🚀🎉'); }
+      return;
+    }
     const pr = e.target.closest('[data-p]');
     if (pr) { i.priority = +pr.dataset.p; touch(i); save(); render(); paintDetail(); return; }
     const act = e.target.closest('[data-act]'); if (!act) return;
     switch (act.dataset.act) {
-      case 'cancel': detail = null; closeSheet(); break;
+      case 'cancel': closeSheet(); break;
       case 'edit': openEditor(i.uuid); break;
       case 'pin': i.isPinned = !i.isPinned; save(); render(); paintDetail(); toast(i.isPinned ? '📌 Pinned' : 'Unpinned'); break;
       case 'delete':
         if (act.dataset.armed) {
-          ideas = ideas.filter((x) => x.uuid !== i.uuid);
-          save(); render(); detail = null; closeSheet(); toast('Idea deleted');
+          closeSheet(); deleteIdea(i.uuid);
         } else {
           act.dataset.armed = '1';
           act.querySelector('.lbl').textContent = 'Tap again to delete';
@@ -559,8 +804,6 @@ function openDetail(id) {
         break;
     }
   });
-  // Backdrop tap also closes the detail
-  stack[stack.length - 1].bd.addEventListener('click', () => { detail = null; });
 }
 function refreshDetail() { if (detail) paintDetail(); }
 function paintDetail() {
@@ -573,16 +816,16 @@ function paintDetail() {
       <div class="d-meta">${pill(i.status)}${flames(i.priority)}${i.isPinned ? pinMark() : ''}</div>
       ${i.details ? `<p class="d-text">${esc(i.details)}</p>` : ''}
     </div>
-    ${i.problem ? `<h3 class="section-h">Problem it solves</h3><div class="group pad"><div class="d-text" style="margin:0">${esc(i.problem)}</div></div>` : ''}
-    <h3 class="section-h">Next step</h3>
+    ${i.problem ? `<h3 class="section-h">🎯 Problem it solves</h3><div class="group pad"><div class="d-text" style="margin:0">${esc(i.problem)}</div></div>` : ''}
+    <h3 class="section-h">👣 Next step</h3>
     ${i.nextStep
       ? `<div class="group pad"><div class="next">${svg('arrow')}<span class="d-text" style="margin:0">${esc(i.nextStep)}</span></div></div>`
-      : `<div class="group"><button class="list-btn" data-act="edit">${svg('plus')}Add a next step</button></div>`}
-    <h3 class="section-h">Status</h3>
+      : `<div class="group"><button class="list-btn" data-act="edit">${svg('plus')}Add a next step to get it moving</button></div>`}
+    <h3 class="section-h">📈 Status</h3>
     <div class="status-grid">${ORDER.map((s) => `<button class="chip${i.status === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-status="${s}">${svg(STATUS[s].i)}${STATUS[s].t}</button>`).join('')}</div>
-    <h3 class="section-h">Priority</h3>
+    <h3 class="section-h">🔥 Priority</h3>
     <div class="seg">${PRIORITY.map((p, n) => `<button class="${i.priority === n ? 'on' : ''}" data-p="${n}">${p}</button>`).join('')}</div>
-    ${(i.category || i.tags.length) ? `<h3 class="section-h">Organize</h3><div class="group">
+    ${(i.category || i.tags.length) ? `<h3 class="section-h">🗂 Organize</h3><div class="group">
       ${i.category ? `<div class="kv"><span>Category</span><span>${esc(i.category)}</span></div>` : ''}
       ${i.tags.length ? `<div class="tags-row"><div class="tags">${i.tags.map((t) => `<span class="tag">#${esc(t)}</span>`).join('')}</div></div>` : ''}
     </div>` : ''}
@@ -691,15 +934,31 @@ $('#importFile').addEventListener('change', async (e) => {
 /* ================= wiring ================= */
 $('#settingsBtn').innerHTML = svg('gear');
 $('#sortBtn').innerHTML = svg('sort');
-$('#addBtn').innerHTML = svg('plus');
 $('#searchIco').innerHTML = svg('search');
 $('#clearSearch').innerHTML = svg('xcircle').replace('<svg', '<svg width="18" height="18"');
-$('#quickBtn').innerHTML = svg('bolt') + 'Quick Idea';
+$('#capBtn').innerHTML = svg('sparkles') + 'Capture';
+$('#moreBtn').innerHTML = svg('edit') + 'Add details';
+$('#fab').innerHTML = svg('sparkles') + 'New idea';
+$('#motto').textContent = pick(MOTTOS);
+$('#prompt').textContent = ui.prompt;
 
 $('#settingsBtn').onclick = openSettings;
 $('#sortBtn').onclick = openSort;
-$('#addBtn').onclick = () => openEditor(null);
-$('#quickBtn').onclick = openQuick;
+$('#dice').onclick = () => setPrompt(pick(PROMPTS, ui.prompt));
+
+const capInput = $('#capInput');
+capInput.addEventListener('input', () => {
+  syncCapture();
+  capInput.style.height = 'auto';
+  capInput.style.height = Math.max(92, capInput.scrollHeight + 4) + 'px';
+});
+$('#capBtn').onclick = captureNow;
+$('#moreBtn').onclick = () => {
+  const text = capInput.value.trim();
+  const [first, ...rest] = text.split('\n');
+  openEditor(null, { title: (first || '').trim(), details: rest.join('\n').trim() });
+};
+$('#fab').onclick = () => { capInput.focus(); capInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
 
 const searchInput = $('#search');
 searchInput.addEventListener('input', () => {
@@ -719,29 +978,104 @@ $('#chips').addEventListener('click', (e) => {
   ui.filter = (f && ui.filter === f) ? null : f;
   render();
 });
+/* ---------- swipe actions on idea cards ---------- */
+const REVEAL = 156; // width of Pin + Delete buttons
+let openSwipe = null, suppressClick = false;
+function setX(row, x) { row.querySelector('.card').style.transform = x ? `translateX(${x}px)` : ''; }
+function closeOpenSwipe() {
+  if (!openSwipe) return;
+  const r = openSwipe; setX(r, 0); openSwipe = null;
+  setTimeout(() => { if (openSwipe !== r) r.classList.remove('open'); }, 300);
+}
+
+(() => {
+  const list = $('#list');
+  let row = null, sx = 0, sy = 0, dx = 0, base = 0, mode = null;
+  list.addEventListener('touchstart', (e) => {
+    const r = e.target.closest('.swipe');
+    if (!r || e.touches.length !== 1 || e.target.closest('.sw-right button')) { row = null; return; }
+    if (openSwipe && openSwipe !== r) closeOpenSwipe();
+    row = r; sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; mode = null;
+    base = openSwipe === r ? -REVEAL : 0;
+  }, { passive: true });
+  list.addEventListener('touchmove', (e) => {
+    if (!row) return;
+    const mx = e.touches[0].clientX - sx, my = e.touches[0].clientY - sy;
+    if (!mode) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      mode = Math.abs(mx) > Math.abs(my) ? 'h' : 'v';
+      if (mode === 'h') row.classList.add('dragging');
+    }
+    if (mode !== 'h') return;
+    e.preventDefault();
+    dx = mx;
+    let x = base + dx;
+    const canRight = !!row.querySelector('.sw-left');
+    if (x > 0 && !canRight) x = x * 0.15;                 // rubber band
+    if (x < -REVEAL) x = -REVEAL + (x + REVEAL) * 0.25;   // rubber band past buttons
+    row.classList.toggle('dir-right', x > 0);
+    setX(row, x);
+  }, { passive: false });
+  const end = () => {
+    if (!row) return;
+    const r = row; row = null;
+    r.classList.remove('dragging');
+    if (mode !== 'h') return;
+    suppressClick = true; setTimeout(() => { suppressClick = false; }, 350);
+    const x = base + dx;
+    if (x > 90 && r.querySelector('.sw-left')) {
+      // Swipe right: advance to next stage
+      setX(r, 0); openSwipe = null;
+      const i = find(r.dataset.id); const nx = i && NEXT[i.status];
+      if (nx) {
+        setTimeout(() => {
+          i.status = nx; touch(i); save(); render();
+          if (nx === 'shipped') { confetti(innerWidth / 2, innerHeight / 3); toast('You shipped it! 🚀🎉'); }
+          else toast(`Moved to ${STATUS[nx].t} ${nx === 'building' ? '🔨' : '👍'}`);
+        }, 200);
+      }
+    } else if (x < -REVEAL / 2) {
+      setX(r, -REVEAL); openSwipe = r; r.classList.add('open');
+    } else {
+      setX(r, 0); if (openSwipe === r) openSwipe = null;
+      setTimeout(() => { r.classList.remove('dir-right'); if (openSwipe !== r) r.classList.remove('open'); }, 280);
+    }
+  };
+  list.addEventListener('touchend', end);
+  list.addEventListener('touchcancel', end);
+})();
 
 $('#list').addEventListener('click', (e) => {
-  if (e.target.closest('[data-act=quick]')) return openQuick();
-  const row = e.target.closest('.row'); if (row) openDetail(row.dataset.id);
+  if (suppressClick) return;
+  const sw = e.target.closest('[data-sw]');
+  if (sw) {
+    const id = sw.closest('.swipe').dataset.id; openSwipe = null;
+    if (sw.dataset.sw === 'delete') deleteIdea(id);
+    else { const i = find(id); if (i) { i.isPinned = !i.isPinned; save(); render(); toast(i.isPinned ? '📌 Pinned' : 'Unpinned'); } }
+    return;
+  }
+  const card = e.target.closest('.card'); if (!card) return;
+  if (openSwipe) { closeOpenSwipe(); return; }
+  openDetail(card.dataset.id);
 });
-
+document.addEventListener('touchstart', (e) => { if (openSwipe && !e.target.closest('.swipe')) closeOpenSwipe(); }, { passive: true });
 $('#banner').addEventListener('click', (e) => {
   if (e.target.closest('[data-act=dismiss-banner]')) { lsSet(BANNER_KEY, '1'); renderBanner(); }
 });
-
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && stack.length) { if (stack.length === 1) detail = null; closeSheet(); }
+  if (e.key === 'Escape' && stack.length) closeSheet();
 });
 
-// Compact title in the top bar once the large title scrolls away
+// Show the floating "New idea" button once the capture card scrolls out of view
 new IntersectionObserver(([en]) => {
-  $('#topbar').classList.toggle('scrolled', !en.isIntersecting);
-}, { rootMargin: '-50px 0px 0px 0px' }).observe($('#largeTitle'));
+  $('#fab').classList.toggle('show', !en.isIntersecting);
+}, { threshold: 0 }).observe($('#capture'));
 
-// Keep relative times fresh, and stay in sync if another tab edits data
 setInterval(() => { if (!stack.length) render(); }, 60000);
 window.addEventListener('storage', (e) => { if (e.key === KEY) { ideas = load(); render(); refreshDetail(); } });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !stack.length) render(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !stack.length) { render(); }
+});
 
 render();
 renderBanner();
