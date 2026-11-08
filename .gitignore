@@ -1,10 +1,4 @@
-*.xcodeproj/
-build/
-Payload/
-*.ipa
-DerivedData/
 .DS_Store
-xcuserdata/
 
 # leftover Expo scaffold (not used)
 idea-vault/
