@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ideas</title>
+<meta name="description" content="Capture and track product ideas so you never forget them.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ideas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#f2f2f7; --card:#fff; --text:#000;
+  --text2:rgba(60,60,67,.62); --text3:rgba(60,60,67,.32);
+  --sep:rgba(60,60,67,.2); --fill:rgba(118,118,128,.12); --seg-on:#fff;
+  --accent:#ff9500; --indigo:#5856d6; --blue:#007aff; --orange:#ff9500;
+  --green:#28a745; --gray:#8e8e93; --red:#ff3b30;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#000; --card:#1c1c1e; --text:#fff;
+    --text2:rgba(235,235,245,.62); --text3:rgba(235,235,245,.32);
+    --sep:rgba(84,84,88,.65); --fill:rgba(118,118,128,.24); --seg-on:#636366;
+    --accent:#ff9f0a; --indigo:#7d7aff; --blue:#0a84ff; --orange:#ff9f0a;
+    --green:#30d158; --gray:#98989d; --red:#ff453a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--text);
+  font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  -webkit-text-size-adjust:100%; overscroll-behavior-y:none;
+}
+body.locked{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+svg{display:block;flex:none}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:2px;
+  padding:calc(env(safe-area-inset-top) + 4px) 8px 4px;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:.5px solid transparent; transition:border-color .2s;
+}
+.topbar.scrolled{border-bottom-color:var(--sep)}
+.topbar .mini{flex:1;text-align:center;font-weight:600;opacity:0;transition:opacity .2s}
+.topbar.scrolled .mini{opacity:1}
+.icon-btn{width:44px;height:44px;border:0;background:none;color:var(--accent);display:grid;place-items:center;border-radius:22px}
+.icon-btn:active{opacity:.4}
+.icon-btn svg{width:24px;height:24px}
+
+main{max-width:720px;margin:0 auto;padding-bottom:calc(env(safe-area-inset-bottom) + 100px)}
+h1.large{font-size:34px;line-height:1.15;font-weight:700;letter-spacing:.005em;margin:2px 16px 10px}
+
+.search{margin:0 16px 8px;display:flex;align-items:center;gap:6px;background:var(--fill);border-radius:10px;padding:0 8px;height:38px;color:var(--text2)}
+.search svg{width:18px;height:18px}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:17px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
+.search input::placeholder{color:var(--text2)}
+.search input::-webkit-search-cancel-button{-webkit-appearance:none}
+.search .clear{border:0;background:none;color:var(--text2);padding:4px;display:none}
+.search.has .clear{display:block}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 16px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:7px 12px;font-size:15px;font-weight:500;background:var(--card);color:var(--text)}
+.chip svg{width:15px;height:15px;color:var(--c)}
+.chip .n{color:var(--text2);font-variant-numeric:tabular-nums}
+.chip.on{background:var(--c);color:#fff}
+.chip.on svg{color:#fff}
+.chip.on .n{color:rgba(255,255,255,.85)}
+
+.section-h{margin:22px 32px 7px;font-size:13px;font-weight:400;text-transform:uppercase;letter-spacing:.02em;color:var(--text2)}
+.group{margin:0 16px;background:var(--card);border-radius:12px;overflow:hidden}
+.group.pad{padding:14px 16px}
+.foot{margin:7px 32px 0;font-size:13px;color:var(--text2)}
+
+/* ---------- rows ---------- */
+.row{display:block;width:100%;text-align:left;border:0;background:none;padding:12px 16px;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.row:active{background:var(--fill)}
+.row-top{display:flex;align-items:flex-start;gap:6px}
+.row-title{flex:1;min-width:0;font-weight:600;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row-desc{margin-top:3px;font-size:15px;color:var(--text2);word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row-meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text2);min-width:0}
+.row-meta .cat{display:inline-flex;align-items:center;gap:3px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.row-meta .cat svg{width:12px;height:12px}
+.row-meta .time{margin-left:auto;color:var(--text3);white-space:nowrap}
+.pin{color:var(--accent);padding-top:3px}
+.pin svg{width:14px;height:14px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.pill svg{width:12px;height:12px}
+.flames{display:inline-flex;color:var(--red);padding-top:4px}
+.flames svg{width:12px;height:12px}
+
+/* ---------- empty / banner ---------- */
+.empty{text-align:center;padding:56px 32px 0;color:var(--text2)}
+.empty .big-ico{width:64px;height:64px;margin:0 auto 14px;color:var(--text3)}
+.empty h2{margin:0 0 6px;color:var(--text);font-size:22px}
+.empty p{margin:0 auto 18px;max-width:300px;font-size:15px}
+.btn{border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;padding:12px 20px}
+.btn:active{opacity:.7}
+.banner{margin:8px 16px 0;background:var(--card);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;font-size:14px}
+.banner img{width:40px;height:40px;border-radius:9px}
+.banner b{display:block;font-size:15px}
+.banner .x{border:0;background:none;color:var(--text3);padding:6px;margin-left:auto}
+.banner .x svg{width:18px;height:18px}
+.share-ico{display:inline-block;vertical-align:-3px;width:16px;height:16px;color:var(--blue)}
+
+/* ---------- quick button ---------- */
+.fab{
+  position:fixed; left:50%; transform:translateX(-50%); z-index:4;
+  bottom:calc(env(safe-area-inset-bottom) + 14px);
+  display:flex; align-items:center; gap:8px; border:0; border-radius:999px;
+  padding:14px 24px; background:var(--accent); color:#fff; font-weight:600;
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.fab svg{width:20px;height:20px}
+.fab:active{transform:translateX(-50%) scale(.96)}
+
+/* ---------- sheets ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);opacity:0;transition:opacity .28s;z-index:20}
+.backdrop.show{opacity:1}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:21; max-width:720px; margin:0 auto;
+  height:calc(100% - env(safe-area-inset-top) - 18px);
+  background:var(--bg); border-radius:14px 14px 0 0;
+  transform:translateY(105%); transition:transform .34s cubic-bezier(.2,.8,.2,1);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.sheet.short{height:auto;max-height:calc(100% - env(safe-area-inset-top) - 18px)}
+.sheet.show{transform:none}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--text3);margin:6px auto 0;flex:none}
+.sheet-head{display:flex;align-items:center;padding:4px 6px 8px;flex:none}
+.sheet-head .t{flex:1;text-align:center;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txt-btn{border:0;background:none;color:var(--accent);font-size:17px;padding:8px 10px;min-width:82px}
+.txt-btn.l{text-align:left}
+.txt-btn.r{text-align:right}
+.txt-btn.strong{font-weight:600}
+.txt-btn:disabled{color:var(--text3)}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(env(safe-area-inset-bottom) + 28px)}
+.sheet-body>.section-h:first-child{margin-top:8px}
+
+.field{position:relative;padding:11px 16px}
+.field+.field::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.field textarea,.field input[type=text]{display:block;width:100%;border:0;background:transparent;font:inherit;font-size:17px;color:var(--text);outline:none;resize:none;padding:0;-webkit-appearance:none;appearance:none}
+.field textarea::placeholder,.field input::placeholder{color:var(--text3)}
+.field textarea.big{font-size:20px;font-weight:600}
+.field.inline{display:flex;align-items:center;gap:12px}
+.field.inline label{flex:1}
+
+.status-grid{display:flex;flex-wrap:wrap;gap:8px;margin:0 16px}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:0 16px}
+.seg button{flex:1;border:0;background:none;padding:7px 4px;border-radius:7px;font-size:13px;font-weight:500}
+.seg button.on{background:var(--seg-on);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+
+.switch{position:relative;width:51px;height:31px;flex:none}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;border-radius:31px;background:var(--fill);transition:background .2s;pointer-events:none}
+.switch span::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked+span{background:var(--green)}
+.switch input:checked+span::after{transform:translateX(20px)}
+
+/* ---------- detail ---------- */
+.d-title{margin:0 0 10px;font-size:24px;line-height:1.2;font-weight:700;word-break:break-word}
+.d-meta{display:flex;align-items:center;gap:8px}
+.d-meta .flames,.d-meta .pin{padding-top:0}
+.d-text{margin:12px 0 0;white-space:pre-wrap;word-break:break-word;user-select:text;-webkit-user-select:text}
+.next{display:flex;gap:10px;align-items:flex-start;word-break:break-word}
+.next svg{width:22px;height:22px;color:var(--accent);margin-top:-1px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tag{font-size:14px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:3px 9px;border-radius:999px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;position:relative}
+.kv+.kv::before,.kv+.tags-row::before,.list-btn+.list-btn::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.kv span:last-child{color:var(--text2);text-align:right}
+.tags-row{padding:11px 16px;position:relative}
+.list-btn{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:12px 16px;text-align:left;position:relative;color:var(--accent)}
+.list-btn:active{background:var(--fill)}
+.list-btn svg{width:20px;height:20px}
+.list-btn.danger{color:var(--red)}
+.list-btn .end{margin-left:auto;color:var(--text2)}
+.list-btn.plain{color:var(--text)}
+.check{color:var(--accent)}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 10px); z-index:50;
+  transform:translate(-50%,-20px); opacity:0; pointer-events:none;
+  background:color-mix(in srgb,var(--card) 92%,transparent);
+  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+  color:var(--text); padding:10px 18px; border-radius:999px; font-size:15px; font-weight:500;
+  box-shadow:0 6px 24px rgba(0,0,0,.18); transition:opacity .25s, transform .25s; white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar">
+  <button class="icon-btn" id="settingsBtn" aria-label="Settings"></button>
+  <div class="mini">Ideas</div>
+  <button class="icon-btn" id="sortBtn" aria-label="Sort"></button>
+  <button class="icon-btn" id="addBtn" aria-label="New detailed idea"></button>
+</header>
+
+<main>
+  <h1 class="large" id="largeTitle">Ideas</h1>
+  <div id="banner"></div>
+  <div id="controls">
+    <label class="search" id="searchBox">
+      <span id="searchIco"></span>
+      <span class="sr">Search</span>
+      <input id="search" type="search" placeholder="Search ideas, tags, notes" autocomplete="off" enterkeyhint="search">
+      <button class="clear" id="clearSearch" type="button" aria-label="Clear search"></button>
+    </label>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div id="list"></div>
+</main>
+
+<button class="fab" id="quickBtn"></button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= constants ================= */
+const KEY = 'ideas.v1';
+const SORT_KEY = 'ideas.sort';
+const BANNER_KEY = 'ideas.bannerDismissed';
+const VERSION = '1.0.0';
+
+const ICON = {
+  bulb: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  hammer: '<path d="m15 12-8.5 8.5a2.12 2.12 0 0 1-3-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25a2 2 0 0 1-.6-1.42V7.86L16.5 5.3a5.5 5.5 0 0 0-4-1.66H9.44l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/>',
+  send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>',
+  pause: '<circle cx="12" cy="12" r="10"/><path d="M10 15V9"/><path d="M14 15V9"/>',
+  stack: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 10.76V4h6v6.76l3 3.24V16H6v-2z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
+  bolt: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  folder: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+  arrow: '<circle cx="12" cy="12" r="10"/><path d="m12 16 4-4-4-4"/><path d="M8 12h8"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  xcircle: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>',
+  upload: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+};
+const FLAME = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 23c4.4 0 8-3.1 8-7.6 0-3.7-2.4-6.2-4.3-8.5-.5 2-1.5 3.2-2.7 3.7.3-3.6-1.3-6.9-4.5-9.1.4 3.5-1.6 5.6-3.3 7.7C3.9 11 3 12.9 3 15.4 3 19.9 7.6 23 12 23z"/></svg>';
+const svg = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+
+const STATUS = {
+  idea:      { t: 'Idea',      c: 'var(--indigo)', i: 'bulb' },
+  exploring: { t: 'Exploring', c: 'var(--blue)',   i: 'search' },
+  building:  { t: 'Building',  c: 'var(--orange)', i: 'hammer' },
+  shipped:   { t: 'Shipped',   c: 'var(--green)',  i: 'send' },
+  parked:    { t: 'Parked',    c: 'var(--gray)',   i: 'pause' },
+};
+const ORDER = ['idea', 'exploring', 'building', 'shipped', 'parked'];
+const PRIORITY = ['None', 'Low', 'Medium', 'High'];
+const SORTS = { updated: 'Recently Updated', created: 'Newest First', priority: 'Priority', title: 'Name' };
+
+/* ================= helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const iso = (d = new Date()) => d.toISOString().replace(/\.\d{3}Z$/, 'Z'); // no ms: matches the native app's backup format
+const validDate = (v) => { const d = new Date(v); return isNaN(d) ? iso() : iso(d); };
+const makeId = () => (crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    })).toUpperCase();
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } };
+const displayTitle = (i) => i.title.trim() || 'Untitled idea';
+const searchText = (i) => [i.title, i.details, i.problem, i.nextStep, i.category, i.tags.join(' ')].join(' ').toLowerCase();
+const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function parseTags(text) {
+  const seen = new Set(); const out = [];
+  for (let t of String(text).split(',')) {
+    t = t.trim().replace(/^#+/, '').trim();
+    if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); out.push(t); }
+  }
+  return out;
+}
+
+function rel(when) {
+  const d = new Date(when); const s = (Date.now() - d) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  if (s < 172800) return 'yesterday';
+  if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+  const opts = { month: 'short', day: 'numeric' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
+const fullDate = (when) => new Date(when).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+const pill = (s) => `<span class="pill" style="--c:${STATUS[s].c}">${svg(STATUS[s].i)}${STATUS[s].t}</span>`;
+const flames = (p) => p > 0 ? `<span class="flames" aria-label="${PRIORITY[p]} priority">${FLAME.repeat(p)}</span>` : '';
+const pinMark = () => `<span class="pin" aria-label="Pinned">${svg('pin')}</span>`;
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ================= data ================= */
+function normalize(r) {
+  r = r || {};
+  const p = Math.min(3, Math.max(0, parseInt(r.priority, 10) || 0));
+  return {
+    uuid: String(r.uuid || makeId()).toUpperCase(),
+    title: String(r.title ?? ''), details: String(r.details ?? ''),
+    problem: String(r.problem ?? ''), nextStep: String(r.nextStep ?? ''),
+    category: String(r.category ?? ''),
+    tags: Array.isArray(r.tags) ? r.tags.map(String).filter(Boolean) : [],
+    status: ORDER.includes(r.status) ? r.status : 'idea',
+    priority: p, isPinned: !!r.isPinned,
+    createdAt: validDate(r.createdAt || Date.now()), updatedAt: validDate(r.updatedAt || Date.now()),
+  };
+}
+function load() {
+  try { const raw = JSON.parse(lsGet(KEY) || '[]'); return Array.isArray(raw) ? raw.map(normalize) : []; }
+  catch { return []; }
+}
+function save() {
+  if (!lsSet(KEY, JSON.stringify(ideas))) toast('⚠️ Could not save, storage is full or blocked');
+}
+const find = (id) => ideas.find((i) => i.uuid === id);
+const touch = (i) => { i.updatedAt = iso(); };
+
+let ideas = load();
+const ui = { filter: null, search: '', sort: SORTS[lsGet(SORT_KEY)] ? lsGet(SORT_KEY) : 'updated' };
+
+function visibleIdeas() {
+  const q = ui.search.trim().toLowerCase();
+  const list = ideas.filter((i) => (!ui.filter || i.status === ui.filter) && (!q || searchText(i).includes(q)));
+  const by = {
+    updated: (a, b) => b.updatedAt.localeCompare(a.updatedAt),
+    created: (a, b) => b.createdAt.localeCompare(a.createdAt),
+    priority: (a, b) => b.priority - a.priority || b.updatedAt.localeCompare(a.updatedAt),
+    title: (a, b) => displayTitle(a).localeCompare(displayTitle(b), undefined, { sensitivity: 'base' }),
+  };
+  return list.sort(by[ui.sort] || by.updated);
+}
+
+/* ================= main list ================= */
+function rowHTML(i) {
+  return `<button class="row" data-id="${esc(i.uuid)}">
+    <div class="row-top">${i.isPinned ? pinMark() : ''}<span class="row-title">${esc(displayTitle(i))}</span>${flames(i.priority)}</div>
+    ${i.details.trim() ? `<div class="row-desc">${esc(i.details)}</div>` : ''}
+    <div class="row-meta">${pill(i.status)}${i.category ? `<span class="cat">${svg('folder')}${esc(i.category)}</span>` : ''}<span class="time">${rel(i.updatedAt)}</span></div>
+  </button>`;
+}
+
+function render() {
+  const counts = {}; ideas.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
+  $('#controls').style.display = ideas.length ? '' : 'none';
+  $('#chips').innerHTML =
+    `<button class="chip${ui.filter ? '' : ' on'}" style="--c:var(--accent)" data-filter="">${svg('stack')}All <span class="n">${ideas.length}</span></button>` +
+    ORDER.map((s) => `<button class="chip${ui.filter === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-filter="${s}">${svg(STATUS[s].i)}${STATUS[s].t} <span class="n">${counts[s] || 0}</span></button>`).join('');
+
+  const list = $('#list');
+  if (!ideas.length) {
+    list.innerHTML = `<div class="empty"><div class="big-ico">${svg('bulb')}</div><h2>No ideas yet</h2>
+      <p>Capture product ideas the moment they hit you, so you never lose one again.</p>
+      <button class="btn" data-act="quick">Capture your first idea</button></div>`;
+    return;
+  }
+  const items = visibleIdeas();
+  if (!items.length) {
+    list.innerHTML = ui.search.trim()
+      ? `<div class="empty"><div class="big-ico">${svg('search')}</div><h2>No results</h2><p>Nothing matches “${esc(ui.search.trim())}”.</p></div>`
+      : `<div class="empty"><div class="big-ico">${svg(STATUS[ui.filter].i)}</div><h2>Nothing here</h2><p>No ideas with status “${STATUS[ui.filter].t}” yet.</p></div>`;
+    return;
+  }
+  const pinned = items.filter((i) => i.isPinned);
+  const rest = items.filter((i) => !i.isPinned);
+  let html = '';
+  if (pinned.length) html += `<h3 class="section-h">Pinned</h3><div class="group">${pinned.map(rowHTML).join('')}</div>`;
+  if (rest.length) html += `<h3 class="section-h">${pinned.length ? 'Ideas' : SORTS[ui.sort]}</h3><div class="group">${rest.map(rowHTML).join('')}</div>`;
+  list.innerHTML = html;
+}
+
+function renderBanner() {
+  const show = isIOS() && !isStandalone() && lsGet(BANNER_KEY) !== '1';
+  $('#banner').innerHTML = show ? `<div class="banner">
+    <img src="icon-180.png" alt="">
+    <div><b>Install Ideas</b>Tap <span class="share-ico">${svg('share')}</span> Share, then “Add to Home Screen”.</div>
+    <button class="x" data-act="dismiss-banner" aria-label="Dismiss">${svg('x')}</button></div>` : '';
+}
+
+/* ================= sheets ================= */
+const stack = [];
+function openSheet(inner, short = false) {
+  const bd = document.createElement('div'); bd.className = 'backdrop';
+  const sh = document.createElement('div'); sh.className = 'sheet' + (short ? ' short' : '');
+  sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-modal', 'true');
+  sh.innerHTML = '<div class="grabber"></div>' + inner;
+  document.body.append(bd, sh);
+  stack.push({ bd, sh });
+  bd.addEventListener('click', closeSheet);
+  void sh.offsetHeight; // force layout so the slide-up transition runs
+  bd.classList.add('show'); sh.classList.add('show');
+  document.body.classList.add('locked');
+  return sh;
+}
+function closeSheet() {
+  const l = stack.pop(); if (!l) return;
+  if (document.activeElement && l.sh.contains(document.activeElement)) document.activeElement.blur();
+  l.bd.classList.remove('show'); l.sh.classList.remove('show');
+  setTimeout(() => { l.bd.remove(); l.sh.remove(); }, 340);
+  if (!stack.length) document.body.classList.remove('locked');
+}
+const head = (title, left = 'Cancel', right = '') =>
+  `<div class="sheet-head"><button class="txt-btn l" data-act="cancel">${left}</button><div class="t">${esc(title)}</div>` +
+  (right ? `<button class="txt-btn r strong" data-act="ok">${right}</button>` : '<span class="txt-btn r"></span>') + '</div>';
+
+function autoGrow(root) {
+  root.querySelectorAll('textarea').forEach((t) => {
+    const fit = () => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+    t.addEventListener('input', fit); requestAnimationFrame(fit);
+  });
+}
+
+/* ---------- quick capture ---------- */
+function openQuick() {
+  const sh = openSheet(head('Quick Idea', 'Cancel', 'Save') + `<div class="sheet-body">
+    <div class="group" style="margin-top:8px">
+      <div class="field"><textarea id="q-title" class="big" rows="1" placeholder="What's the idea?" enterkeyhint="next"></textarea></div>
+      <div class="field"><textarea id="q-notes" rows="3" placeholder="Quick notes (optional)"></textarea></div>
+    </div>
+    <p class="foot">Just get it down. You can add the problem, next step and tags later.</p></div>`, true);
+  const t = $('#q-title', sh), n = $('#q-notes', sh), ok = $('[data-act=ok]', sh);
+  const sync = () => { ok.disabled = !t.value.trim(); };
+  sync(); autoGrow(sh);
+  t.addEventListener('input', sync);
+  t.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); n.focus(); } });
+  $('[data-act=cancel]', sh).onclick = closeSheet;
+  ok.onclick = () => {
+    if (!t.value.trim()) return;
+    ideas.push(normalize({ title: t.value.trim(), details: n.value.trim() }));
+    save(); render(); closeSheet(); toast('💡 Idea saved');
+  };
+  t.focus();
+}
+
+/* ---------- editor (new / edit) ---------- */
+function openEditor(id) {
+  const ex = id ? find(id) : null;
+  const d = ex ? { ...ex, tags: [...ex.tags] } : normalize({});
+  const cats = [...new Set(ideas.map((i) => i.category.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const sh = openSheet(head(ex ? 'Edit Idea' : 'New Idea', 'Cancel', 'Save') + `<div class="sheet-body">
+    <h3 class="section-h">Idea</h3>
+    <div class="group">
+      <div class="field"><textarea id="e-title" class="big" rows="1" placeholder="Title">${esc(d.title)}</textarea></div>
+      <div class="field"><textarea id="e-details" rows="3" placeholder="Describe it">${esc(d.details)}</textarea></div>
+    </div>
+    <h3 class="section-h">Problem it solves</h3>
+    <div class="group"><div class="field"><textarea id="e-problem" rows="2" placeholder="Who has this problem? Why does it matter?">${esc(d.problem)}</textarea></div></div>
+    <h3 class="section-h">Next step</h3>
+    <div class="group"><div class="field"><textarea id="e-next" rows="1" placeholder="e.g. Sketch the main screen">${esc(d.nextStep)}</textarea></div></div>
+    <p class="foot">One small, concrete action makes it much easier to actually start.</p>
+    <h3 class="section-h">Status</h3>
+    <div class="status-grid" id="e-status">${ORDER.map((s) => `<button class="chip${d.status === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-status="${s}">${svg(STATUS[s].i)}${STATUS[s].t}</button>`).join('')}</div>
+    <h3 class="section-h">Priority</h3>
+    <div class="seg" id="e-priority">${PRIORITY.map((p, n) => `<button class="${d.priority === n ? 'on' : ''}" data-p="${n}">${p}</button>`).join('')}</div>
+    <div class="group" style="margin-top:16px">
+      <div class="field inline"><label for="e-pin">Pin to top</label><span class="switch"><input type="checkbox" id="e-pin" ${d.isPinned ? 'checked' : ''}><span></span></span></div>
+    </div>
+    <h3 class="section-h">Organize</h3>
+    <div class="group">
+      <div class="field"><input type="text" id="e-cat" list="e-cats" placeholder="Category (e.g. SaaS, Mobile, AI)" value="${esc(d.category)}" autocomplete="off"></div>
+      <div class="field"><input type="text" id="e-tags" placeholder="Tags, separated by commas" value="${esc(d.tags.join(', '))}" autocapitalize="none" autocomplete="off"></div>
+    </div>
+    <datalist id="e-cats">${cats.map((c) => `<option value="${esc(c)}">`).join('')}</datalist>
+  </div>`);
+  autoGrow(sh);
+  const ok = $('[data-act=ok]', sh), title = $('#e-title', sh);
+  const sync = () => { ok.disabled = !title.value.trim(); };
+  sync(); title.addEventListener('input', sync);
+
+  sh.addEventListener('click', (e) => {
+    const st = e.target.closest('[data-status]');
+    if (st) { d.status = st.dataset.status; sh.querySelectorAll('[data-status]').forEach((b) => b.classList.toggle('on', b === st)); return; }
+    const pr = e.target.closest('[data-p]');
+    if (pr) { d.priority = +pr.dataset.p; sh.querySelectorAll('[data-p]').forEach((b) => b.classList.toggle('on', b === pr)); }
+  });
+  $('[data-act=cancel]', sh).onclick = closeSheet;
+  ok.onclick = () => {
+    if (!title.value.trim()) return;
+    const target = ex || d;
+    Object.assign(target, {
+      title: title.value.trim(),
+      details: $('#e-details', sh).value.trim(),
+      problem: $('#e-problem', sh).value.trim(),
+      nextStep: $('#e-next', sh).value.trim(),
+      category: $('#e-cat', sh).value.trim(),
+      tags: parseTags($('#e-tags', sh).value),
+      status: d.status, priority: d.priority,
+      isPinned: $('#e-pin', sh).checked,
+    });
+    touch(target);
+    if (!ex) ideas.push(target);
+    save(); render(); closeSheet(); refreshDetail();
+    toast(ex ? 'Saved' : '💡 Idea saved');
+  };
+  if (!ex) title.focus();
+}
+
+/* ---------- detail ---------- */
+let detail = null;
+function openDetail(id) {
+  const sh = openSheet(`<div class="sheet-head"><button class="txt-btn l" data-act="cancel">Done</button><div class="t"></div><button class="txt-btn r" data-act="edit">Edit</button></div><div class="sheet-body" id="d-body"></div>`);
+  detail = { id, sh };
+  paintDetail();
+  sh.addEventListener('click', (e) => {
+    const i = find(detail && detail.id); if (!i) return;
+    const st = e.target.closest('[data-status]');
+    if (st) { i.status = st.dataset.status; touch(i); save(); render(); paintDetail(); return; }
+    const pr = e.target.closest('[data-p]');
+    if (pr) { i.priority = +pr.dataset.p; touch(i); save(); render(); paintDetail(); return; }
+    const act = e.target.closest('[data-act]'); if (!act) return;
+    switch (act.dataset.act) {
+      case 'cancel': detail = null; closeSheet(); break;
+      case 'edit': openEditor(i.uuid); break;
+      case 'pin': i.isPinned = !i.isPinned; save(); render(); paintDetail(); toast(i.isPinned ? '📌 Pinned' : 'Unpinned'); break;
+      case 'delete':
+        if (act.dataset.armed) {
+          ideas = ideas.filter((x) => x.uuid !== i.uuid);
+          save(); render(); detail = null; closeSheet(); toast('Idea deleted');
+        } else {
+          act.dataset.armed = '1';
+          act.querySelector('.lbl').textContent = 'Tap again to delete';
+          setTimeout(() => { if (act.isConnected) { delete act.dataset.armed; act.querySelector('.lbl').textContent = 'Delete Idea'; } }, 3000);
+        }
+        break;
+    }
+  });
+  // Backdrop tap also closes the detail
+  stack[stack.length - 1].bd.addEventListener('click', () => { detail = null; });
+}
+function refreshDetail() { if (detail) paintDetail(); }
+function paintDetail() {
+  const i = find(detail.id);
+  const body = $('#d-body', detail.sh);
+  if (!i) { detail = null; closeSheet(); return; }
+  body.innerHTML = `
+    <div class="group pad" style="margin-top:8px">
+      <h2 class="d-title">${esc(displayTitle(i))}</h2>
+      <div class="d-meta">${pill(i.status)}${flames(i.priority)}${i.isPinned ? pinMark() : ''}</div>
+      ${i.details ? `<p class="d-text">${esc(i.details)}</p>` : ''}
+    </div>
+    ${i.problem ? `<h3 class="section-h">Problem it solves</h3><div class="group pad"><div class="d-text" style="margin:0">${esc(i.problem)}</div></div>` : ''}
+    <h3 class="section-h">Next step</h3>
+    ${i.nextStep
+      ? `<div class="group pad"><div class="next">${svg('arrow')}<span class="d-text" style="margin:0">${esc(i.nextStep)}</span></div></div>`
+      : `<div class="group"><button class="list-btn" data-act="edit">${svg('plus')}Add a next step</button></div>`}
+    <h3 class="section-h">Status</h3>
+    <div class="status-grid">${ORDER.map((s) => `<button class="chip${i.status === s ? ' on' : ''}" style="--c:${STATUS[s].c}" data-status="${s}">${svg(STATUS[s].i)}${STATUS[s].t}</button>`).join('')}</div>
+    <h3 class="section-h">Priority</h3>
+    <div class="seg">${PRIORITY.map((p, n) => `<button class="${i.priority === n ? 'on' : ''}" data-p="${n}">${p}</button>`).join('')}</div>
+    ${(i.category || i.tags.length) ? `<h3 class="section-h">Organize</h3><div class="group">
+      ${i.category ? `<div class="kv"><span>Category</span><span>${esc(i.category)}</span></div>` : ''}
+      ${i.tags.length ? `<div class="tags-row"><div class="tags">${i.tags.map((t) => `<span class="tag">#${esc(t)}</span>`).join('')}</div></div>` : ''}
+    </div>` : ''}
+    <div class="group" style="margin-top:24px">
+      <button class="list-btn" data-act="pin">${svg('pin')}<span>${i.isPinned ? 'Unpin' : 'Pin to top'}</span></button>
+      <button class="list-btn danger" data-act="delete">${svg('trash')}<span class="lbl">Delete Idea</span></button>
+    </div>
+    <p class="foot">Created ${esc(fullDate(i.createdAt))} · Updated ${esc(fullDate(i.updatedAt))}</p>`;
+}
+
+/* ---------- sort ---------- */
+function openSort() {
+  const sh = openSheet(head('Sort by', 'Cancel') + `<div class="sheet-body"><div class="group" style="margin-top:8px">
+    ${Object.entries(SORTS).map(([k, v]) => `<button class="list-btn plain" data-sort="${k}"><span>${v}</span>${ui.sort === k ? `<span class="end check">${svg('check')}</span>` : ''}</button>`).join('')}
+  </div></div>`, true);
+  sh.addEventListener('click', (e) => {
+    if (e.target.closest('[data-act=cancel]')) return closeSheet();
+    const b = e.target.closest('[data-sort]'); if (!b) return;
+    ui.sort = b.dataset.sort; lsSet(SORT_KEY, ui.sort); render(); closeSheet();
+  });
+}
+
+/* ---------- settings / backup ---------- */
+async function openSettings() {
+  const counts = {}; ideas.forEach((i) => { counts[i.status] = (counts[i.status] || 0) + 1; });
+  let persisted = null;
+  try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch {}
+  const sh = openSheet(head('Settings', 'Done') + `<div class="sheet-body">
+    <h3 class="section-h">Your ideas</h3>
+    <div class="group">
+      <div class="kv"><span>Total</span><span>${ideas.length}</span></div>
+      ${ORDER.map((s) => `<div class="kv"><span style="display:flex;align-items:center;gap:8px;color:${STATUS[s].c}">${svg(STATUS[s].i).replace('<svg', '<svg width="18" height="18"')}<span style="color:var(--text)">${STATUS[s].t}</span></span><span>${counts[s] || 0}</span></div>`).join('')}
+    </div>
+    <h3 class="section-h">Backup</h3>
+    <div class="group">
+      <button class="list-btn" data-act="export" ${ideas.length ? '' : 'disabled style="opacity:.4"'}>${svg('upload')}Export Backup</button>
+      <button class="list-btn" data-act="import">${svg('download')}Import Backup</button>
+    </div>
+    <p class="foot">Export saves all ideas as a file (choose “Save to Files” or iCloud Drive). Do it now and then. Importing merges by idea, so you won't get duplicates.</p>
+    <h3 class="section-h">About</h3>
+    <div class="group">
+      <div class="kv"><span>Installed as app</span><span>${isStandalone() ? 'Yes' : 'No'}</span></div>
+      <div class="kv"><span>Storage</span><span>On this device${persisted ? ' (protected)' : ''}</span></div>
+      <div class="kv"><span>Version</span><span>${VERSION}</span></div>
+    </div>
+    ${isStandalone() ? '' : `<p class="foot">To install: open this page in Safari, tap Share, then “Add to Home Screen”. Ideas saved before installing stay in Safari, so export them first and import them in the installed app.</p>`}
+  </div>`);
+  sh.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]'); if (!act) return;
+    if (act.dataset.act === 'cancel') closeSheet();
+    if (act.dataset.act === 'export') exportBackup();
+    if (act.dataset.act === 'import') $('#importFile').click();
+  });
+}
+
+async function exportBackup() {
+  if (!ideas.length) return;
+  const payload = {
+    app: 'IdeaVault', version: 1, exportedAt: iso(),
+    ideas: ideas.map((i) => ({
+      uuid: i.uuid, title: i.title, details: i.details, problem: i.problem, nextStep: i.nextStep,
+      category: i.category, tags: i.tags, status: i.status, priority: i.priority, isPinned: i.isPinned,
+      createdAt: i.createdAt, updatedAt: i.updatedAt,
+    })),
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const name = `ideas-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const file = new File([json], name, { type: 'application/json' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Ideas backup' });
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') return;
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast('Backup downloaded');
+}
+
+$('#importFile').addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const records = Array.isArray(data) ? data : data.ideas;
+    if (!Array.isArray(records)) throw new Error('bad file');
+    const byId = new Map(ideas.map((i) => [i.uuid, i]));
+    let added = 0, updated = 0;
+    for (const r of records) {
+      const n = normalize(r);
+      const cur = byId.get(n.uuid);
+      if (!cur) { ideas.push(n); byId.set(n.uuid, n); added++; }
+      else if (n.updatedAt > cur.updatedAt) { Object.assign(cur, n); updated++; }
+    }
+    save(); render();
+    toast(`Imported ${added} new, updated ${updated}`);
+  } catch {
+    toast('⚠️ That file isn’t an Ideas backup');
+  }
+});
+
+/* ================= wiring ================= */
+$('#settingsBtn').innerHTML = svg('gear');
+$('#sortBtn').innerHTML = svg('sort');
+$('#addBtn').innerHTML = svg('plus');
+$('#searchIco').innerHTML = svg('search');
+$('#clearSearch').innerHTML = svg('xcircle').replace('<svg', '<svg width="18" height="18"');
+$('#quickBtn').innerHTML = svg('bolt') + 'Quick Idea';
+
+$('#settingsBtn').onclick = openSettings;
+$('#sortBtn').onclick = openSort;
+$('#addBtn').onclick = () => openEditor(null);
+$('#quickBtn').onclick = openQuick;
+
+const searchInput = $('#search');
+searchInput.addEventListener('input', () => {
+  ui.search = searchInput.value;
+  $('#searchBox').classList.toggle('has', !!ui.search);
+  render();
+});
+searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchInput.blur(); });
+$('#clearSearch').onclick = (e) => {
+  e.preventDefault(); searchInput.value = ''; ui.search = '';
+  $('#searchBox').classList.remove('has'); render();
+};
+
+$('#chips').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-filter]'); if (!c) return;
+  const f = c.dataset.filter || null;
+  ui.filter = (f && ui.filter === f) ? null : f;
+  render();
+});
+
+$('#list').addEventListener('click', (e) => {
+  if (e.target.closest('[data-act=quick]')) return openQuick();
+  const row = e.target.closest('.row'); if (row) openDetail(row.dataset.id);
+});
+
+$('#banner').addEventListener('click', (e) => {
+  if (e.target.closest('[data-act=dismiss-banner]')) { lsSet(BANNER_KEY, '1'); renderBanner(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && stack.length) { if (stack.length === 1) detail = null; closeSheet(); }
+});
+
+// Compact title in the top bar once the large title scrolls away
+new IntersectionObserver(([en]) => {
+  $('#topbar').classList.toggle('scrolled', !en.isIntersecting);
+}, { rootMargin: '-50px 0px 0px 0px' }).observe($('#largeTitle'));
+
+// Keep relative times fresh, and stay in sync if another tab edits data
+setInterval(() => { if (!stack.length) render(); }, 60000);
+window.addEventListener('storage', (e) => { if (e.key === KEY) { ideas = load(); render(); refreshDetail(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !stack.length) render(); });
+
+render();
+renderBanner();
+
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+})();
+</script>
+</body>
+</html>
